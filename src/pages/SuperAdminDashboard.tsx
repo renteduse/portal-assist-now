@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ interface Employee {
   id: string;
   name: string;
   email: string;
-  role: 'employee' | 'hr' | 'admin' | 'super-admin';
+  role: 'employee' | 'hr' | 'admin' | 'it' | 'super-admin';
   department: string;
   status: 'active' | 'inactive';
   joinDate: string;
@@ -30,14 +29,14 @@ const SuperAdminDashboard = () => {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Employee | null>(null);
 
-  // Mock employees data
+  // Mock employees data with IT role
   const [employees, setEmployees] = useState<Employee[]>([
     {
       id: '1',
-      name: 'Admin User',
+      name: 'Super Admin',
       email: 'admin@helphub.com',
       role: 'super-admin',
-      department: 'IT',
+      department: 'Management',
       status: 'active',
       joinDate: '2024-01-01'
     },
@@ -52,30 +51,39 @@ const SuperAdminDashboard = () => {
     },
     {
       id: '3',
-      name: 'John Doe',
-      email: 'employee@helphub.com',
-      role: 'employee',
-      department: 'Engineering',
+      name: 'IT Support',
+      email: 'it@helphub.com',
+      role: 'it',
+      department: 'Information Technology',
       status: 'active',
       joinDate: '2024-01-03'
     },
     {
       id: '4',
-      name: 'Jane Smith',
-      email: 'jane.smith@helphub.com',
+      name: 'Admin User',
+      email: 'admin-user@helphub.com',
       role: 'admin',
-      department: 'Operations',
+      department: 'Administration',
       status: 'active',
       joinDate: '2024-01-04'
     },
     {
       id: '5',
-      name: 'Mike Wilson',
-      email: 'mike.wilson@helphub.com',
+      name: 'John Doe',
+      email: 'employee@helphub.com',
+      role: 'employee',
+      department: 'Engineering',
+      status: 'active',
+      joinDate: '2024-01-05'
+    },
+    {
+      id: '6',
+      name: 'Jane Smith',
+      email: 'jane.smith@helphub.com',
       role: 'employee',
       department: 'Marketing',
       status: 'inactive',
-      joinDate: '2024-01-05'
+      joinDate: '2024-01-06'
     }
   ]);
 
@@ -151,6 +159,8 @@ const SuperAdminDashboard = () => {
         return 'bg-orange-100 text-orange-800';
       case 'hr':
         return 'bg-blue-100 text-blue-800';
+      case 'it':
+        return 'bg-purple-100 text-purple-800';
       case 'employee':
         return 'bg-green-100 text-green-800';
       default:
@@ -190,19 +200,19 @@ const SuperAdminDashboard = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all">
+          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all hover:scale-105">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Users</p>
                   <p className="text-3xl font-bold text-blue-600">{employees.length}</p>
                 </div>
-                <Users className="w-8 h-8 text-blue-600" />
+                <Users className="w-8 h-8 text-blue-600 animate-pulse" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all" style={{ animationDelay: '0.1s' }}>
+          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all hover:scale-105" style={{ animationDelay: '0.1s' }}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -216,13 +226,13 @@ const SuperAdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all" style={{ animationDelay: '0.2s' }}>
+          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all hover:scale-105" style={{ animationDelay: '0.2s' }}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Admins</p>
+                  <p className="text-sm font-medium text-gray-600">Admins & IT</p>
                   <p className="text-3xl font-bold text-orange-600">
-                    {employees.filter(emp => emp.role === 'admin' || emp.role === 'super-admin').length}
+                    {employees.filter(emp => emp.role === 'admin' || emp.role === 'super-admin' || emp.role === 'it').length}
                   </p>
                 </div>
                 <Shield className="w-8 h-8 text-orange-600" />
@@ -230,7 +240,7 @@ const SuperAdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all" style={{ animationDelay: '0.3s' }}>
+          <Card className="animate-scale-in bg-white/60 backdrop-blur-sm border-0 hover:shadow-lg transition-all hover:scale-105" style={{ animationDelay: '0.3s' }}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -246,7 +256,7 @@ const SuperAdminDashboard = () => {
         </div>
 
         {/* User Management */}
-        <Card className="animate-slide-up bg-white/80 backdrop-blur-sm border-0">
+        <Card className="animate-slide-up bg-white/80 backdrop-blur-sm border-0 shadow-xl">
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
@@ -256,7 +266,7 @@ const SuperAdminDashboard = () => {
               
               <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all">
                     <Plus className="w-4 h-4 mr-2" />
                     Add User
                   </Button>
@@ -298,6 +308,7 @@ const SuperAdminDashboard = () => {
                           <SelectItem value="employee">Employee</SelectItem>
                           <SelectItem value="hr">HR</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="it">IT</SelectItem>
                           <SelectItem value="super-admin">Super Admin</SelectItem>
                         </SelectContent>
                       </Select>
@@ -345,6 +356,7 @@ const SuperAdminDashboard = () => {
                   <SelectItem value="employee">Employee</SelectItem>
                   <SelectItem value="hr">HR</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="it">IT</SelectItem>
                   <SelectItem value="super-admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -366,12 +378,12 @@ const SuperAdminDashboard = () => {
                 </thead>
                 <tbody>
                   {filteredEmployees.map((employee, index) => (
-                    <tr key={employee.id} className="border-b border-gray-100 hover:bg-gray-50/50 animate-slide-up" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <tr key={employee.id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 animate-slide-up transition-all" style={{ animationDelay: `${index * 0.05}s` }}>
                       <td className="py-3 px-4 font-medium">{employee.name}</td>
                       <td className="py-3 px-4 text-gray-600">{employee.email}</td>
                       <td className="py-3 px-4">
                         <Badge className={getRoleColor(employee.role)}>
-                          {employee.role.replace('-', ' ')}
+                          {employee.role.replace('-', ' ').toUpperCase()}
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-gray-600">{employee.department}</td>
@@ -385,14 +397,14 @@ const SuperAdminDashboard = () => {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => setEditingUser(employee)}>
+                          <Button variant="ghost" size="sm" onClick={() => setEditingUser(employee)} className="hover:scale-110 transition-transform">
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             onClick={() => handleDeleteUser(employee.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:scale-110 transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -454,6 +466,7 @@ const SuperAdminDashboard = () => {
                     <SelectItem value="employee">Employee</SelectItem>
                     <SelectItem value="hr">HR</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="it">IT</SelectItem>
                     <SelectItem value="super-admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>

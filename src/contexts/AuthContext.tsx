@@ -1,11 +1,10 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'employee' | 'hr' | 'admin' | 'super-admin';
+  role: 'employee' | 'hr' | 'admin' | 'it' | 'super-admin';
   department?: string;
   avatar?: string;
 }
@@ -31,16 +30,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock users for demonstration
+  // Mock users for demonstration with new IT role
   const mockUsers: Record<string, { password: string; user: User }> = {
     'admin@helphub.com': {
       password: 'admin123',
       user: {
         id: '1',
-        name: 'Admin User',
+        name: 'Super Admin',
         email: 'admin@helphub.com',
         role: 'super-admin',
-        department: 'IT'
+        department: 'Management'
       }
     },
     'hr@helphub.com': {
@@ -53,10 +52,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         department: 'Human Resources'
       }
     },
+    'it@helphub.com': {
+      password: 'it123',
+      user: {
+        id: '3',
+        name: 'IT Support',
+        email: 'it@helphub.com',
+        role: 'it',
+        department: 'Information Technology'
+      }
+    },
+    'admin-user@helphub.com': {
+      password: 'admin123',
+      user: {
+        id: '4',
+        name: 'Admin User',
+        email: 'admin-user@helphub.com',
+        role: 'admin',
+        department: 'Administration'
+      }
+    },
     'employee@helphub.com': {
       password: 'emp123',
       user: {
-        id: '3',
+        id: '5',
         name: 'John Doe',
         email: 'employee@helphub.com',
         role: 'employee',
