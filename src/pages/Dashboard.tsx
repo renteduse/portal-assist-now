@@ -1,76 +1,84 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { ticketsApi } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
-import { Plus, Clock, CheckCircle, AlertCircle, Filter, Zap, Users, Settings } from 'lucide-react';
+import { Plus, Clock, CheckCircle, AlertCircle, Filter, Zap, Users, Settings, Loader } from 'lucide-react';
 
 interface Ticket {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   category: 'IT' | 'HR' | 'Admin';
   status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   createdAt: string;
-  assignee?: string;
-  assignedTo?: 'it' | 'hr' | 'admin';
+  requester: {
+    name: string;
+    email: string;
+  };
+  assignedTo?: {
+    name: string;
+    email: string;
+  };
 }
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [stats, setStats] = useState<any>({});
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock tickets data with smart routing
-  const [tickets] = useState<Ticket[]>([
-    {
-      id: '1',
-      title: 'Laptop screen flickering',
-      description: 'My laptop screen has been flickering intermittently',
-      category: 'IT',
-      status: 'In Progress',
-      priority: 'High',
-      createdAt: '2024-01-15',
-      assignee: 'IT Support Team',
-      assignedTo: 'it'
-    },
-    {
-      id: '2',
-      title: 'Payroll inquiry',
-      description: 'Question about my recent payslip calculation',
-      category: 'HR',
-      status: 'Resolved',
-      priority: 'Medium',
-      createdAt: '2024-01-14',
-      assignee: 'HR Manager',
-      assignedTo: 'hr'
-    },
-    {
-      id: '3',
-      title: 'Meeting room booking issue',
-      description: 'Unable to book conference room for next week',
-      category: 'Admin',
-      status: 'Open',
-      priority: 'Low',
-      createdAt: '2024-01-16',
-      assignee: 'Admin Team',
-      assignedTo: 'admin'
-    },
-    {
-      id: '4',
-      title: 'VPN connection problems',
-      description: 'Cannot connect to company VPN from home',
-      category: 'IT',
-      status: 'Open',
-      priority: 'Critical',
-      createdAt: '2024-01-17',
-      assignee: 'IT Support Team',
-      assignedTo: 'it'
+  useEffect(() => {
+    if (user) {
+      fetchTickets();
+      fetchStats();
     }
-  ]);
+  }, [user, selectedStatus]);
+
+  const fetchTickets = async () => {
+    try {
+      setIsLoading(true);
+      const params = selectedStatus !== 'all' ? { status: selectedStatus } : {};
+      const response = await ticketsApi.getTickets(params);
+      setTickets(response.tickets || []);
+    } catch (error) {
+      console.error('Failed to fetch tickets:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load tickets. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await ticketsApi.getStats();
+      const statusStats = response.statusStats.reduce((acc: any, stat: any) => {
+        acc[stat._id.toLowerCase().replace(' ', '')] = stat.count;
+        return acc;
+      }, {});
+      
+      setStats({
+        open: statusStats.open || 0,
+        inProgress: statusStats.inprogress || 0,
+        resolved: statusStats.resolved || 0,
+        closed: statusStats.closed || 0,
+        total: response.statusStats.reduce((sum: number, stat: any) => sum + stat.count, 0)
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -142,39 +150,6 @@ const Dashboard = () => {
     }
   };
 
-  // Filter tickets based on user role for admin/hr/it users
-  const getRelevantTickets = () => {
-    if (!user) return [];
-    
-    // If user is employee or super-admin, show all their tickets
-    if (user.role === 'employee' || user.role === 'super-admin') {
-      return tickets;
-    }
-    
-    // For specialized roles, show tickets assigned to their department
-    const roleMapping = {
-      'it': 'IT',
-      'hr': 'HR', 
-      'admin': 'Admin'
-    };
-    
-    return tickets.filter(ticket => 
-      ticket.category === roleMapping[user.role as keyof typeof roleMapping]
-    );
-  };
-
-  const relevantTickets = getRelevantTickets();
-  const filteredTickets = selectedStatus === 'all' 
-    ? relevantTickets 
-    : relevantTickets.filter(ticket => ticket.status.toLowerCase() === selectedStatus);
-
-  const statusCounts = {
-    open: relevantTickets.filter(t => t.status === 'Open').length,
-    inProgress: relevantTickets.filter(t => t.status === 'In Progress').length,
-    resolved: relevantTickets.filter(t => t.status === 'Resolved').length,
-    closed: relevantTickets.filter(t => t.status === 'Closed').length
-  };
-
   if (!user) {
     return null;
   }
@@ -203,7 +178,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Open Tickets</p>
-                  <p className="text-3xl font-bold text-red-600">{statusCounts.open}</p>
+                  <p className="text-3xl font-bold text-red-600">{stats.open || 0}</p>
                 </div>
                 <div className="p-2 bg-red-100 rounded-lg">
                   <AlertCircle className="w-8 h-8 text-red-600" />
@@ -217,7 +192,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">In Progress</p>
-                  <p className="text-3xl font-bold text-yellow-600">{statusCounts.inProgress}</p>
+                  <p className="text-3xl font-bold text-yellow-600">{stats.inProgress || 0}</p>
                 </div>
                 <div className="p-2 bg-yellow-100 rounded-lg">
                   <Clock className="w-8 h-8 text-yellow-600" />
@@ -231,7 +206,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Resolved</p>
-                  <p className="text-3xl font-bold text-green-600">{statusCounts.resolved}</p>
+                  <p className="text-3xl font-bold text-green-600">{stats.resolved || 0}</p>
                 </div>
                 <div className="p-2 bg-green-100 rounded-lg">
                   <CheckCircle className="w-8 h-8 text-green-600" />
@@ -245,7 +220,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Tickets</p>
-                  <p className="text-3xl font-bold text-blue-600">{relevantTickets.length}</p>
+                  <p className="text-3xl font-bold text-blue-600">{stats.total || 0}</p>
                 </div>
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">T</span>
@@ -272,10 +247,10 @@ const Dashboard = () => {
               className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all hover:scale-105"
             >
               <option value="all">All Status</option>
-              <option value="open">Open</option>
-              <option value="in progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+              <option value="Closed">Closed</option>
             </select>
           </div>
         </div>
@@ -297,54 +272,62 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {filteredTickets.length > 0 ? (
-                filteredTickets.map((ticket, index) => (
-                  <Link key={ticket.id} to={`/ticket/${ticket.id}`}>
-                    <div 
-                      className="p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer bg-white/50 animate-slide-up group hover:scale-[1.02] duration-300"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">{ticket.title}</h3>
-                            <Badge variant="outline" className={`text-xs flex items-center gap-1 ${getCategoryColor(ticket.category)}`}>
-                              {getCategoryIcon(ticket.category)}
-                              {ticket.category}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader className="w-8 h-8 animate-spin text-blue-600" />
+                <span className="ml-2 text-gray-600">Loading tickets...</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {tickets.length > 0 ? (
+                  tickets.map((ticket, index) => (
+                    <Link key={ticket._id} to={`/ticket/${ticket._id}`}>
+                      <div 
+                        className="p-4 border rounded-lg hover:shadow-md transition-all cursor-pointer bg-white/50 animate-slide-up group hover:scale-[1.02] duration-300"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">{ticket.title}</h3>
+                              <Badge variant="outline" className={`text-xs flex items-center gap-1 ${getCategoryColor(ticket.category)}`}>
+                                {getCategoryIcon(ticket.category)}
+                                {ticket.category}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-600 text-sm mb-2">{ticket.description}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
+                              <span>By: {ticket.requester.name}</span>
+                              {ticket.assignedTo && <span>Assigned to: {ticket.assignedTo.name}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className={`${getPriorityColor(ticket.priority)} text-xs border group-hover:scale-110 transition-transform`}>
+                              {ticket.priority}
+                            </Badge>
+                            <Badge className={`${getStatusColor(ticket.status)} text-xs flex items-center gap-1 border group-hover:scale-110 transition-transform`}>
+                              {getStatusIcon(ticket.status)}
+                              {ticket.status}
                             </Badge>
                           </div>
-                          <p className="text-gray-600 text-sm mb-2">{ticket.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
-                            {ticket.assignee && <span>Assigned to: {ticket.assignee}</span>}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={`${getPriorityColor(ticket.priority)} text-xs border group-hover:scale-110 transition-transform`}>
-                            {ticket.priority}
-                          </Badge>
-                          <Badge className={`${getStatusColor(ticket.status)} text-xs flex items-center gap-1 border group-hover:scale-110 transition-transform`}>
-                            {getStatusIcon(ticket.status)}
-                            {ticket.status}
-                          </Badge>
                         </div>
                       </div>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="text-center py-8 animate-fade-in">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <AlertCircle className="w-8 h-8 text-gray-400" />
                     </div>
-                  </Link>
-                ))
-              ) : (
-                <div className="text-center py-8 animate-fade-in">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="w-8 h-8 text-gray-400" />
+                    <p className="text-gray-500 mb-4">No tickets found for the selected filter</p>
+                    <Link to="/create-ticket">
+                      <Button variant="outline" className="hover:scale-105 transition-all duration-300">Create Your First Ticket</Button>
+                    </Link>
                   </div>
-                  <p className="text-gray-500 mb-4">No tickets found for the selected filter</p>
-                  <Link to="/create-ticket">
-                    <Button variant="outline" className="hover:scale-105 transition-all duration-300">Create Your First Ticket</Button>
-                  </Link>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

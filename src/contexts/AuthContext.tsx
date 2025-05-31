@@ -1,4 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authApi } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -30,89 +32,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock users for demonstration with new IT role
-  const mockUsers: Record<string, { password: string; user: User }> = {
-    'admin@helphub.com': {
-      password: 'admin123',
-      user: {
-        id: '1',
-        name: 'Super Admin',
-        email: 'admin@helphub.com',
-        role: 'super-admin',
-        department: 'Management'
-      }
-    },
-    'hr@helphub.com': {
-      password: 'hr123',
-      user: {
-        id: '2',
-        name: 'HR Manager',
-        email: 'hr@helphub.com',
-        role: 'hr',
-        department: 'Human Resources'
-      }
-    },
-    'it@helphub.com': {
-      password: 'it123',
-      user: {
-        id: '3',
-        name: 'IT Support',
-        email: 'it@helphub.com',
-        role: 'it',
-        department: 'Information Technology'
-      }
-    },
-    'admin-user@helphub.com': {
-      password: 'admin123',
-      user: {
-        id: '4',
-        name: 'Admin User',
-        email: 'admin-user@helphub.com',
-        role: 'admin',
-        department: 'Administration'
-      }
-    },
-    'employee@helphub.com': {
-      password: 'emp123',
-      user: {
-        id: '5',
-        name: 'John Doe',
-        email: 'employee@helphub.com',
-        role: 'employee',
-        department: 'Engineering'
-      }
-    }
-  };
-
   useEffect(() => {
-    // Check for stored user session
-    const storedUser = localStorage.getItem('helphub_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Check for stored token and validate with backend
+    const checkAuth = async () => {
+      const token = localStorage.getItem('helphub_token');
+      if (token) {
+        try {
+          const response = await authApi.getMe();
+          setUser({
+            id: response.user.id,
+            name: response.user.name,
+            email: response.user.email,
+            role: response.user.role,
+            department: response.user.department
+          });
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          localStorage.removeItem('helphub_token');
+          localStorage.removeItem('helphub_user');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockUser = mockUsers[email];
-    if (mockUser && mockUser.password === password) {
-      setUser(mockUser.user);
-      localStorage.setItem('helphub_user', JSON.stringify(mockUser.user));
+    try {
+      const response = await authApi.login(email, password);
+      
+      const userData: User = {
+        id: response.user.id,
+        name: response.user.name,
+        email: response.user.email,
+        role: response.user.role,
+        department: response.user.department
+      };
+      
+      setUser(userData);
+      localStorage.setItem('helphub_token', response.token);
+      localStorage.setItem('helphub_user', JSON.stringify(userData));
       setIsLoading(false);
       return true;
+    } catch (error) {
+      console.error('Login failed:', error);
+      setIsLoading(false);
+      return false;
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('helphub_token');
     localStorage.removeItem('helphub_user');
   };
 
