@@ -140,6 +140,8 @@ const Login = () => {
               <div className="space-y-1 text-xs text-blue-700">
                 <p><strong>Super Admin:</strong> admin@helphub.com / admin123</p>
                 <p><strong>HR:</strong> hr@helphub.com / hr123</p>
+                <p><strong>IT:</strong> it@helphub.com / it123</p>
+                <p><strong>Admin:</strong> admin-user@helphub.com / admin123</p>
                 <p><strong>Employee:</strong> employee@helphub.com / emp123</p>
               </div>
             </div>

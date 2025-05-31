@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator 
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, User, LogOut, Shield, Users } from 'lucide-react';
+import { Settings, User, LogOut, Monitor, Users } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -47,8 +47,8 @@ const Navbar = () => {
                 {(user.role === 'admin' || user.role === 'super-admin') && (
                   <Link to="/admin">
                     <Button variant="ghost" className="hover:bg-blue-50">
-                      <Shield className="w-4 h-4 mr-2" />
-                      Admin
+                      <Monitor className="w-4 h-4 mr-2" />
+                      Monitor
                     </Button>
                   </Link>
                 )}
@@ -57,7 +57,7 @@ const Navbar = () => {
                   <Link to="/super-admin">
                     <Button variant="ghost" className="hover:bg-blue-50">
                       <Users className="w-4 h-4 mr-2" />
-                      Super Admin
+                      User Management
                     </Button>
                   </Link>
                 )}
